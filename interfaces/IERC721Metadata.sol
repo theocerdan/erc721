@@ -1,7 +1,6 @@
-import {IERC721} from "./IERC721.sol";
 pragma solidity ^0.8.20;
 
-interface IERC721Metadata is IERC721 {
+interface IERC721Metadata {
     /// @notice A descriptive name for a collection of NFTs in this contract
     function name() external view returns (string memory);
 

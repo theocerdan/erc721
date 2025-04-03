@@ -1,7 +1,17 @@
 {
-  "name": "hardhat-project",
+  "name": "erc721",
+  "scripts": {
+    "test": "hardhat test",
+    "typechain": "hardhat typechain",
+    "compile": "hardhat compile && hardhat typechain"
+  },
   "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.8",
     "@nomicfoundation/hardhat-toolbox-viem": "^3.0.0",
     "hardhat": "^2.22.19"
+  },
+  "dependencies": {
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@typechain/hardhat": "^9.1.0"
   }
 }
