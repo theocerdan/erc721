@@ -20,6 +20,7 @@ const fastForward = async (seconds: number) => {
 
     await hre.ethers.provider.send("evm_setNextBlockTimestamp", [timestamp]);
 }
+
 describe("MyNFT", function () {
 
     it("should deploy MyNFT", async function () {

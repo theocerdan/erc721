@@ -10,6 +10,10 @@ import {IERC721} from "../interfaces/IERC721.sol";
 
 contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
+    //TODO : Ajouter les events
+    //TODO : support interface a revoir
+    //TODO : enumerable a faire ?
+    
     error Unauthorized();
     error NotOwner();
     error ZeroAddress();
