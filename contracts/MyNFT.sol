@@ -3,8 +3,8 @@
 pragma solidity 0.8.28;
 
 import {IERC165} from "../interfaces/IERC165.sol";
-import {IERC721Metadata} from "../interfaces/IERC721Metadata.sol";
 import {IERC721Enumerable} from "../interfaces/IERC721Enumerable.sol";
+import {IERC721Metadata} from "../interfaces/IERC721Metadata.sol";
 import {IERC721Receiver} from "../interfaces/IERC721Receiver.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
 
@@ -12,8 +12,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
     //TODO : Ajouter les events
     //TODO : support interface a revoir
-    //TODO : enumerable a faire ?
-    
+
     error Unauthorized();
     error NotOwner();
     error ZeroAddress();
@@ -25,12 +24,14 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     error NoEthersRaised();
     error WithdrawNotAllowed();
     error WithdrawNotAsked();
+    error AlreadyMinted(uint256 tokenId);
+
+    error ERC721OutOfBoundsIndex(address, uint256);
 
     /* Information */
     string private _name;
     string private _symbol;
     string private _baseURI;
-    uint256 private _totalSupply;
 
     /* Crowd sale */
     uint256 private constant GRACE_PERIOD = 1 weeks;
@@ -41,7 +42,14 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     address private _saleOwner;
     address private _pendingSaleOwner;
 
-    mapping(address => uint256) private balance;
+    /* Balance */
+    uint256[] private _allTokens;
+    mapping(uint256 tokenId => uint256) private _allTokensIndex;
+
+    mapping(address owner => mapping(uint256 index => uint256)) private _ownedTokens;
+    mapping(uint256 tokenId => uint256) private _ownedTokensIndex;
+
+    mapping(address owner => uint256) private balance;
 
     mapping(uint256 => address) private owner;
 
@@ -55,7 +63,6 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
         _name = name;
         _symbol = symbol;
         _baseURI = baseURI;
-        _totalSupply = 0;
         _open = false;
 
         if (price <= 0) revert InvalidPrice();
@@ -76,29 +83,22 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
         return _open;
     }
 
-    function name() external view returns (string memory) { //calldata ou memory sachant que la valeur retournée est une const
+    function name() public view returns (string memory) { //calldata ou memory sachant que la valeur retournée est une const
         return _name;
     }
 
-    function symbol() external view returns (string memory) { //calldata ou memory sachant que la valeur retournée est une const
+    function symbol() public view returns (string memory) { //calldata ou memory sachant que la valeur retournée est une const
         return _symbol;
     }
 
-    function totalSupply() external view returns (uint256) {
-        return _totalSupply;
+    function totalSupply() public view returns (uint256) {
+        return _allTokens.length;
     }
 
     function price() external view returns (uint256) {
         return _price;
     }
 
-    function tokenByIndex(uint256 _index) external view returns (uint256) {
-        return 0;
-    }
-
-    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256) {
-        return 0;
-    }
 
     /* Sale Ownership */
     modifier onlySaleOwner() {
@@ -153,7 +153,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
         return string.concat(baseURI(), string(abi.encodePacked(_tokenId)));
     }
 
-    function balanceOf(address _owner) external view returns (uint256) {
+    function balanceOf(address _owner) public view returns (uint256) {
         return balance[_owner];
     }
 
@@ -169,7 +169,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
         return approvalForAll[_owner][_operator] || approval[_tokenId] == _operator;
     }
 
-    function ownerOf(uint256 _tokenId) external view returns (address) {
+    function ownerOf(uint256 _tokenId) public view returns (address) {
         return owner[_tokenId];
     }
 
@@ -180,10 +180,12 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
         approval[_tokenId] = address(0);
 
-        owner[_tokenId] = _to;
-
         balance[_from] -= 1;
         balance[_to] += 1;
+
+        owner[_tokenId] = _to;
+
+        _updateEnumeration(_from, _to, _tokenId);
 
         emit Transfer(_from, _to, _tokenId);
     }
@@ -213,29 +215,39 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function isValidToken(uint256 _tokenId) private view returns (bool) {
-        return owner[_tokenId] != address(0) && _tokenId < _totalSupply;
+        return owner[_tokenId] != address(0) && _tokenId < totalSupply();
     }
 
-    function mint() public payable {
+    function tokenByIndex(uint256 _index) external view returns (uint256) {
+        if (_index >= totalSupply()) revert ERC721OutOfBoundsIndex(address(0), _index);
+        return _allTokens[_index];
+    }
+
+    function tokenOfOwnerByIndex(address _owner, uint256 _index) external view returns (uint256) {
+        if (_index >= balanceOf(_owner)) revert ERC721OutOfBoundsIndex(_owner, _index);
+        return _ownedTokens[_owner][_index];
+    }
+
+    function mint(uint256 _nftId) public payable {
         if (!_open) revert ClosedSale();
         if (msg.value < _price) revert InvalidPrice();
+        if (ownerOf(_nftId) != address(0)) revert AlreadyMinted(_nftId);
 
-        uint256 tokenId = _mint(msg.sender);
+        uint256 tokenId = _mint(msg.sender, _nftId);
 
         _ethersRaised += msg.value;
 
         emit Transfer(address(0), msg.sender, tokenId);
     }
 
-    function _mint(address _to) private returns (uint256) {
-        owner[_totalSupply] = _to;
+    function _mint(address _to, uint256 _nftId) private returns (uint256) {
         balance[_to] += 1;
 
-        uint256 nftId = _totalSupply;
+        owner[_nftId] = _to;
+        _addTokenToAllTokensEnumeration(_nftId);
+        _addTokenToOwnerEnumeration(_to, _nftId);
 
-        _totalSupply = _totalSupply + 1;
-
-        return nftId;
+        return _nftId;
     }
 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public {
@@ -257,10 +269,102 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
-        return interfaceId == type(IERC721Metadata).interfaceId;
+        return interfaceId == type(IERC721Metadata).interfaceId ||
+               interfaceId == type(IERC721).interfaceId ||
+               interfaceId == type(IERC721Enumerable).interfaceId;
     }
 
     function isContract(address account) private view returns (bool) {
         return account.code.length > 0;
+    }
+
+    function _updateEnumeration(address from, address to, uint256 tokenId) private returns (address) {
+        if (from == address(0)) {
+            _addTokenToAllTokensEnumeration(tokenId);
+        } else if (from != to) {
+            _removeTokenFromOwnerEnumeration(from, tokenId);
+        }
+        if (to == address(0)) {
+            _removeTokenFromAllTokensEnumeration(tokenId);
+        } else if (from != to) {
+            _addTokenToOwnerEnumeration(to, tokenId);
+        }
+
+        return from;
+    }
+
+    /**
+ * @dev Private function to add a token to this extension's ownership-tracking data structures.
+     * @param to address representing the new owner of the given token ID
+     * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
+     */
+    function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
+        uint256 length = balanceOf(to) - 1;
+        _ownedTokens[to][length] = tokenId;
+        _ownedTokensIndex[tokenId] = length;
+    }
+
+    /**
+     * @dev Private function to add a token to this extension's token tracking data structures.
+     * @param tokenId uint256 ID of the token to be added to the tokens list
+     */
+    function _addTokenToAllTokensEnumeration(uint256 tokenId) private {
+        _allTokensIndex[tokenId] = _allTokens.length;
+        _allTokens.push(tokenId);
+    }
+
+    /**
+     * @dev Private function to remove a token from this extension's ownership-tracking data structures. Note that
+     * while the token is not assigned a new owner, the `_ownedTokensIndex` mapping is _not_ updated: this allows for
+     * gas optimizations e.g. when performing a transfer operation (avoiding double writes).
+     * This has O(1) time complexity, but alters the order of the _ownedTokens array.
+     * @param from address representing the previous owner of the given token ID
+     * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
+     */
+    function _removeTokenFromOwnerEnumeration(address from, uint256 tokenId) private {
+        // To prevent a gap in from's tokens array, we store the last token in the index of the token to delete, and
+        // then delete the last slot (swap and pop).
+
+        uint256 lastTokenIndex = balanceOf(from);
+        uint256 tokenIndex = _ownedTokensIndex[tokenId];
+
+        mapping(uint256 index => uint256) storage _ownedTokensByOwner = _ownedTokens[from];
+
+        // When the token to delete is the last token, the swap operation is unnecessary
+        if (tokenIndex != lastTokenIndex) {
+            uint256 lastTokenId = _ownedTokensByOwner[lastTokenIndex];
+
+            _ownedTokensByOwner[tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
+            _ownedTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
+        }
+
+        // This also deletes the contents at the last position of the array
+        delete _ownedTokensIndex[tokenId];
+        delete _ownedTokensByOwner[lastTokenIndex];
+    }
+
+    /**
+     * @dev Private function to remove a token from this extension's token tracking data structures.
+     * This has O(1) time complexity, but alters the order of the _allTokens array.
+     * @param tokenId uint256 ID of the token to be removed from the tokens list
+     */
+    function _removeTokenFromAllTokensEnumeration(uint256 tokenId) private {
+        // To prevent a gap in the tokens array, we store the last token in the index of the token to delete, and
+        // then delete the last slot (swap and pop).
+
+        uint256 lastTokenIndex = _allTokens.length - 1;
+        uint256 tokenIndex = _allTokensIndex[tokenId];
+
+        // When the token to delete is the last token, the swap operation is unnecessary. However, since this occurs so
+        // rarely (when the last minted token is burnt) that we still do the swap here to avoid the gas cost of adding
+        // an 'if' statement (like in _removeTokenFromOwnerEnumeration)
+        uint256 lastTokenId = _allTokens[lastTokenIndex];
+
+        _allTokens[tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
+        _allTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
+
+        // This also deletes the contents at the last position of the array
+        delete _allTokensIndex[tokenId];
+        _allTokens.pop();
     }
 }
