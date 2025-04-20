@@ -11,9 +11,6 @@ import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
-    //TODO : Ajouter les events
-    //TODO : support interface a revoir
-
     error Unauthorized();
     error NotOwner();
     error ZeroAddress();

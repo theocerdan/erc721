@@ -25,8 +25,6 @@ const fastForward = async (seconds: number) => {
 
 describe("MyNFT", function () {
 
-    //TODO: emit tests
-
     it("should deploy MyNFT", async function () {
         const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
     });
