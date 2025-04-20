@@ -324,8 +324,21 @@ describe("MyNFT", function () {
         });
     });
 
-    describe("Sale ownership", function () {
         describe("setSaleOpen() && isSaleOpen()", function () {
+
+            it("should emit SaleOpenChanged event", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const [owner] = await hre.ethers.getSigners();
+
+                await expect(myNft.setSaleOpen(true)).to.emit(myNft, "SaleOpenChanged").withArgs(
+                    true,
+                );
+
+                await expect(myNft.setSaleOpen(false)).to.emit(myNft, "SaleOpenChanged").withArgs(
+                    false,
+                );
+            });
+
             it("should close the sale if user is the sale owner", async function () {
                 const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
 
@@ -362,6 +375,17 @@ describe("MyNFT", function () {
         });
 
         describe("transferSaleOwner(), getSaleOwner()", function () {
+
+            it("should emit SaleOwnerTransferred on transfer", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const [owner, user] = await hre.ethers.getSigners();
+
+                await expect(myNft.transferSaleOwner(user.getAddress())).to.emit(myNft, "SaleOwnerTransferred").withArgs(
+                    await owner.getAddress(),
+                    await user.getAddress(),
+                );
+            });
+
             it("shoud transfer sale ownership if user is sale owner", async function () {
                 const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
                 const [owner, user] = await hre.ethers.getSigners();
@@ -380,7 +404,20 @@ describe("MyNFT", function () {
         });
 
         describe("acceptSaleOwner(), getSaleOwner()", function () {
-            it("shoud accept sale ownership if user is the pending owner", async function () {
+
+            it("should emit SaleOwnerAccepted on accept", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const [owner, user] = await hre.ethers.getSigners();
+
+                await myNft.transferSaleOwner(user.getAddress());
+
+                await expect(myNft.connect(user).acceptSaleOwner()).to.emit(myNft, "SaleOwnerAccepted").withArgs(
+                    await owner.getAddress(),
+                    await user.getAddress(),
+                );
+            });
+
+            it("should accept sale ownership if user is the pending owner", async function () {
                 const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
                 const [owner, user] = await hre.ethers.getSigners();
 
@@ -392,7 +429,7 @@ describe("MyNFT", function () {
                 expect(await myNft.getSaleOwner()).to.be.equal(await user.getAddress());
             });
 
-            it("shoud not accept sale ownership if user is not the pending owner", async function () {
+            it("should not accept sale ownership if user is not the pending owner", async function () {
                 const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
                 const [owner, user, user2] = await hre.ethers.getSigners();
 
@@ -402,6 +439,23 @@ describe("MyNFT", function () {
         });
 
         describe("askWithdraw(), getEndGracePeriod()", function () {
+
+            it("should emit WithdrawAsked event", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+
+                const block = await hre.ethers.provider.getBlock("latest");
+
+                if (block == null)
+                    throw new Error("Block is null");
+
+                const timestamp = block.timestamp + WEEK_IN_SECONDS;
+
+                await expect(myNft.askWithdraw()).to.emit(myNft, "WithdrawRequested").withArgs(
+                    await myNft.getSaleOwner(),
+                    timestamp + 1,
+                );
+            });
+
             it ("should ask withdraw if user is the sale owner", async function () {
                 const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
 
@@ -443,6 +497,30 @@ describe("MyNFT", function () {
 
             //TODO : transfer failed ?
             //TODO : cas passant
+
+            it("should emit WithdrawCompleted event", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(0, { value: PRICE });
+
+                await myNft.askWithdraw();
+
+                const block = await hre.ethers.provider.getBlock("latest");
+
+                if (block == null)
+                    throw new Error("Block is null");
+
+                await fastForward(WEEK_IN_SECONDS);
+
+                await expect(myNft.withdraw()).to.emit(myNft, "WithdrawCompleted").withArgs(
+                    PRICE,
+                    await owner.getAddress(),
+                );
+            });
 
             it("should revert error during withdraw if ethers raised amount is 0", async function () {
                 const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
@@ -940,9 +1018,6 @@ describe("MyNFT", function () {
 
                 await expect(myNft["safeTransferFrom(address,address,uint256)"](owner, receiver.getAddress(), 444)).to.be.revertedWithCustomError(myNft, "InvalidReceiver");
             });
-
-
-        });
 
     });
 

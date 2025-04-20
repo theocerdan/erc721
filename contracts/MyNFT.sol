@@ -29,6 +29,12 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
     error ERC721OutOfBoundsIndex(address, uint256);
 
+    event SaleOpenChanged(bool open);
+    event SaleOwnerTransferred(address previousOwner, address newOwner);
+    event SaleOwnerAccepted(address previousOwner, address newOwner);
+    event WithdrawRequested(address owner, uint256 endGracePeriod);
+    event WithdrawCompleted(uint256 amount, address reciever);
+
     /* Information */
     string private _name;
     string private _symbol;
@@ -113,12 +119,17 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
     function transferSaleOwner(address newOwner) external onlySaleOwner {
         _pendingSaleOwner = newOwner;
+        emit SaleOwnerTransferred(_saleOwner, newOwner);
     }
 
     function acceptSaleOwner() external {
         require(msg.sender == _pendingSaleOwner, "Not pending owner");
+        address previousOwner = _saleOwner;
+
         _saleOwner = msg.sender;
         _pendingSaleOwner = address(0);
+
+        emit SaleOwnerAccepted(previousOwner, msg.sender);
     }
 
     function getEndGracePeriod() external view returns (uint256) {
@@ -128,6 +139,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     function askWithdraw() external onlySaleOwner {
         if (_endGracePeriod != 0) revert WithdrawAlreadyAsked();
         _endGracePeriod = block.timestamp + GRACE_PERIOD;
+        emit WithdrawRequested(_saleOwner, _endGracePeriod);
     }
 
     function withdraw() external onlySaleOwner {
@@ -141,10 +153,13 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
         (bool success, ) = _saleOwner.call{value: amount}("");
         require(success, "Transfer failed");
+
+        emit WithdrawCompleted(amount, _saleOwner);
     }
 
     function setSaleOpen(bool open) onlySaleOwner public {
         _open = open;
+        emit SaleOpenChanged(open);
     }
 
     /*            */
