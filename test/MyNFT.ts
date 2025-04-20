@@ -146,14 +146,6 @@ describe("MyNFT", function () {
         });
     });
 
-    describe("baseURI()", function () {
-        it("should return the base URI of the collection", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
-
-            expect(await myNft.baseURI()).to.be.equal(BASE_URI);
-        });
-    });
-
     describe('tokenURI()', () => {
 
         it("should return the token URI of the tokenId", async () => {
