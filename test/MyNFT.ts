@@ -289,6 +289,7 @@ describe("MyNFT", function () {
         });
 
         it.skip("should remove ether from user balance when user mint a token", async function () {
+            // j'ai pas trouvé de bon moyen d'obtenir les frais de gas pour les soustraires au calcul
             const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
             const [owner] = await hre.ethers.getSigners();
 
@@ -304,6 +305,7 @@ describe("MyNFT", function () {
         });
 
         it.skip("should not remove ether from user balance if the mint is reverted", async function () {
+            //  meme chose ici
             const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
             const [owner] = await hre.ethers.getSigners();
 
@@ -494,9 +496,6 @@ describe("MyNFT", function () {
         });
 
         describe("withdraw()", function () {
-
-            //TODO : transfer failed ?
-            //TODO : cas passant
 
             it("should emit WithdrawCompleted event", async function () {
                 const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
