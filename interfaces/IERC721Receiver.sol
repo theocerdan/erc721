@@ -6,7 +6,7 @@ pragma solidity ^0.8.20;
 /**
  * @title ERC-721 token receiver interface
  * @dev Interface for any contract that wants to support safeTransfers
- * from ERC-721 asset contracts.
+ * from ERC-721 asset test.
  */
 interface IERC721Receiver {
 

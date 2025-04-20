@@ -1,4 +1,4 @@
-// contracts/MyNFT.sol
+// test/MyNFT.sol
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.28;
 
@@ -7,6 +7,7 @@ import {IERC721Enumerable} from "../interfaces/IERC721Enumerable.sol";
 import {IERC721Metadata} from "../interfaces/IERC721Metadata.sol";
 import {IERC721Receiver} from "../interfaces/IERC721Receiver.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
 contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
@@ -148,21 +149,13 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
     /*            */
 
-    function tokenURI(uint256 _tokenId) external view returns (string memory) {
+    function tokenURI(uint256 _tokenId) public view override returns (string memory) {
         if (!isValidToken(_tokenId)) revert InvalidToken();
-        return string.concat(baseURI(), string(abi.encodePacked(_tokenId)));
+        return string(abi.encodePacked(baseURI(), Strings.toString(_tokenId), ".json"));
     }
 
     function balanceOf(address _owner) public view returns (uint256) {
         return balance[_owner];
-    }
-
-    function isOwner(uint256 _tokenId, address _address) internal view returns (bool) {
-        return getOwner(_tokenId) == _address;
-    }
-
-    function getOwner(uint256 _tokenId) internal view returns (address) {
-        return owner[_tokenId];
     }
 
     function isOperator(uint256 _tokenId, address _owner, address _operator) internal view returns (bool) {
@@ -174,8 +167,10 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function transferFrom(address _from, address _to, uint256 _tokenId) public {
-        if (!((isOwner(_tokenId, _from) || isOperator(_tokenId, getOwner(_tokenId), _from)))) {
+        if (msg.sender != _from && !isOperator(_tokenId, _from, msg.sender)) {
             revert Unauthorized();
+        } else if (owner[_tokenId] != _from) {
+            revert NotOwner();
         }
 
         approval[_tokenId] = address(0);
@@ -191,7 +186,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function approve(address _approved, uint256 _tokenId) external {
-        if (!(isOwner(_tokenId, msg.sender))) {
+        if (owner[_tokenId] != msg.sender) {
             revert NotOwner();
         }
 
@@ -215,7 +210,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function isValidToken(uint256 _tokenId) private view returns (bool) {
-        return owner[_tokenId] != address(0) && _tokenId < totalSupply();
+        return owner[_tokenId] != address(0);
     }
 
     function tokenByIndex(uint256 _index) external view returns (uint256) {

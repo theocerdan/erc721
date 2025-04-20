@@ -25,42 +25,31 @@ const fastForward = async (seconds: number) => {
 
 describe("MyNFT", function () {
 
-    /*
-    Fonctions external :
-        tokenURI(uint256 _tokenId)
-        getApproved(uint256 _tokenId)
-        isApprovedForAll(address _owner, address _operator)
-        supportsInterface(bytes4 interfaceId)
-    Fonctions public :
-        transferFrom(address _from, address _to, uint256 _tokenId)
-        approve(address _approved, uint256 _tokenId)
-        setApprovalForAll(address _operator, bool _approved)
-        safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data)
-        safeTransferFrom(address from, address to, uint256 tokenId)
-     */
+    //TODO: emit tests
 
     it("should deploy MyNFT", async function () {
         const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
     });
 
     describe("supportsInterface()", () => {
-        /*
-        interfaceId == type(IERC721Metadata).interfaceId ||
-               interfaceId == type(IERC721).interfaceId ||
-               interfaceId == type(IERC721Enumerable).interfaceId;
-         */
 
-        //TODO: support interface
-        //cas passant
-        //cas non passant
-        it.skip("should return true if interfaceId is supported", async () => {
+        it("should return true if interfaceId is supported", async () => {
             const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
 
-            const erc721enumerableInterfaceId = '0x5b5e139f'; //IERC721Metadata
-            const erc721metadataInterfaceId = '0x5b5e139f'; //IERC721Metadata
-            const erc721InterfaceId = '0x5b5e139f'; //IERC721Metadata
+            const erc721enumerableInterfaceId = '0x780e9d63';
+            const erc721metadataInterfaceId = '0x5b5e139f';
+            const erc721InterfaceId = '0x80ac58cd';
 
-            //expect(await myNft.supportsInterface('toto')).to.be.equal(true);
+            expect(await myNft.supportsInterface(erc721InterfaceId)).to.be.equal(true);
+            expect(await myNft.supportsInterface(erc721metadataInterfaceId)).to.be.equal(true);
+            expect(await myNft.supportsInterface(erc721enumerableInterfaceId)).to.be.equal(true);
+        })
+
+        it("should return true if interfaceId is not supported", async () => {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+
+            const fakeInterfaceId = '0x12345678';
+            expect(await myNft.supportsInterface(fakeInterfaceId)).to.be.equal(false);
         })
 
     });
@@ -164,6 +153,29 @@ describe("MyNFT", function () {
             const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
 
             expect(await myNft.baseURI()).to.be.equal(BASE_URI);
+        });
+    });
+
+    describe('tokenURI()', () => {
+
+        it("should return the token URI of the tokenId", async () => {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(0, { value: PRICE });
+            await myNft.mint(444, { value: PRICE });
+
+            expect(await myNft.tokenURI(0)).to.be.equal(BASE_URI + "0.json");
+            expect(await myNft.tokenURI(444)).to.be.equal(BASE_URI + "444.json");
+        });
+
+        it("should revert error if tokenId is not minted", async () => {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+
+            await expect(myNft.tokenURI(0)).to.be.revertedWithCustomError(myNft, "InvalidToken");
         });
     });
 
@@ -622,6 +634,313 @@ describe("MyNFT", function () {
                 expect(await myNft.connect(user).tokenOfOwnerByIndex(user, 0)).to.be.equal(200n);
                 await expect(myNft.connect(user).tokenOfOwnerByIndex(user, 1)).to.be.revertedWithCustomError(myNft, "ERC721OutOfBoundsIndex");
             });
+
+        });
+
+    });
+
+    describe("Approval", function () {
+
+        it("should approve an address", async function () {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner, user] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(444, { value: PRICE });
+
+            await myNft.approve(user.getAddress(), 444);
+
+            expect(await myNft.getApproved(444)).to.be.equal(await user.getAddress());
+        });
+
+        it("should emit event when user approve an address", async function () {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner, user] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(444, { value: PRICE });
+
+            await expect(myNft.approve(user.getAddress(), 444)).to.emit(myNft, "Approval").withArgs(
+                await owner.getAddress(),
+                await user.getAddress(),
+                444n,
+            );
+        });
+
+        it("should revoke approve to an approved address", async function () {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner, user] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(444, { value: PRICE });
+
+            await myNft.approve(user.getAddress(), 444);
+
+            expect(await myNft.getApproved(444)).to.be.equal(await user.getAddress());
+
+            await myNft.approve(ZERO_ADDRESS, 444);
+
+            expect(await myNft.getApproved(444)).to.be.equal(ZERO_ADDRESS);
+        });
+
+        it("should not approve an address if user is not the owner", async function () {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner, user] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(444, { value: PRICE });
+
+            await expect(myNft.connect(user).approve(user.getAddress(), 444)).to.be.revertedWithCustomError(myNft, "NotOwner");
+        });
+
+        it("should approveAll an address", async function () {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner, user] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(444, { value: PRICE });
+
+            await myNft.setApprovalForAll(user.getAddress(), true);
+
+            expect(await myNft.isApprovedForAll(owner, user.getAddress())).to.be.equal(true);
+        });
+
+        it("should emit event when user approveAll an address", async function () {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner, user] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(444, { value: PRICE });
+
+            await expect(myNft.setApprovalForAll(user.getAddress(), true)).to.emit(myNft, "ApprovalForAll").withArgs(
+                await owner.getAddress(),
+                await user.getAddress(),
+                true,
+            );
+        });
+
+        it("should revoke approveAll", async function () {
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const signers = await hre.ethers.getSigners();
+            const [owner, user] = signers;
+
+            await myNft.setSaleOpen(true);
+
+            await myNft.mint(444, { value: PRICE });
+
+            await myNft.setApprovalForAll(user.getAddress(), true);
+            expect(await myNft.isApprovedForAll(owner, user.getAddress())).to.be.equal(true);
+
+            await myNft.setApprovalForAll(user.getAddress(), false);
+            expect(await myNft.isApprovedForAll(owner, user.getAddress())).to.be.equal(false);
+        });
+    });
+
+    describe("Transfer", function () {
+
+        describe("transferFrom()", function () {
+
+            it("should transfer a token if user is owner", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                expect(await myNft.ownerOf(444)).to.be.equal(await owner.getAddress());
+
+                await myNft.transferFrom(owner, user, 444);
+
+                expect(await myNft.ownerOf(444)).to.be.equal(await user.getAddress());
+            });
+
+            it("should not transfer a token if user is not owner", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner, user, user2] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                expect(await myNft.ownerOf(444)).to.be.equal(await owner.getAddress());
+
+                await expect(myNft.connect(user).transferFrom(user, user2, 444)).to.be.revertedWithCustomError(myNft, "NotOwner");
+            });
+
+            it("should not transfer another people's token if user is not authorized", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                expect(await myNft.ownerOf(444)).to.be.equal(await owner.getAddress());
+
+                await expect(myNft.connect(user).transferFrom(owner, user, 444)).to.be.revertedWithCustomError(myNft, "Unauthorized");
+            });
+
+            it("should transfer a token and remove specific approval on transferd token", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                expect(await myNft.ownerOf(444)).to.be.equal(await owner.getAddress());
+
+                await myNft.approve(user.getAddress(), 444);
+                expect(await myNft.getApproved(444)).to.be.equal(await user.getAddress());
+
+                await myNft.transferFrom(owner, user, 444);
+                expect(await myNft.getApproved(444)).to.be.equal(ZERO_ADDRESS);
+            });
+
+            it("should decrement and increment balance on transfer", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                expect(await myNft.balanceOf(owner)).to.be.equal(1n);
+                expect(await myNft.balanceOf(user)).to.be.equal(0n);
+
+                await myNft.transferFrom(owner, user, 444);
+
+                expect(await myNft.balanceOf(owner)).to.be.equal(0n);
+                expect(await myNft.balanceOf(user)).to.be.equal(1n);
+            });
+
+            it("should emit event when user transfer a token", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                expect(await myNft.ownerOf(444)).to.be.equal(await owner.getAddress());
+
+                await expect(myNft.transferFrom(owner, user, 444)).to.emit(myNft, "Transfer").withArgs(
+                    await owner.getAddress(),
+                    await user.getAddress(),
+                    444n,
+                );
+            });
+
+        });
+
+        describe("safeTransferFrom()", function () {
+            it("should revert transfer if 'to' is zero address", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                expect(await myNft.ownerOf(444)).to.be.equal(await owner.getAddress());
+
+                await expect(myNft["safeTransferFrom(address,address,uint256)"](owner, ZERO_ADDRESS, 444)).to.be.revertedWithCustomError(myNft, "ZeroAddress");
+            });
+
+            it("should revert transfer if token isn't valid", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                await expect(myNft["safeTransferFrom(address,address,uint256)"](owner, user, 445)).to.be.revertedWithCustomError(myNft, "InvalidToken");
+            });
+
+            it("should exec onERC721Received if 'to' is a contract that implement IERC721Receiver", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const receiver = await hre.ethers.deployContract("Receiver");
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                await expect(myNft["safeTransferFrom(address,address,uint256)"](owner, receiver.getAddress(), 444)).to.emit(receiver, "Recieved").withArgs(
+                    await owner.getAddress(),
+                    await owner.getAddress(),
+                    444n,
+                    "0x",
+                );
+            });
+
+            it("should exec onERC721Received with data payload", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const receiver = await hre.ethers.deployContract("Receiver");
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                await expect(myNft["safeTransferFrom(address,address,uint256,bytes)"](owner, receiver.getAddress(), 444, '0x01020304')).to.emit(receiver, "Recieved").withArgs(
+                    await owner.getAddress(),
+                    await owner.getAddress(),
+                    444n,
+                    '0x01020304',
+                );
+            });
+
+            it("should exec onERC721Received if 'to' is a contract that not implement IERC721Receiver", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const receiver = await hre.ethers.deployContract("NotReceiver");
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                await expect(myNft["safeTransferFrom(address,address,uint256)"](owner, receiver.getAddress(), 444)).to.be.revertedWithoutReason();
+            });
+
+            it("should exec onERC721Received if 'to' is a contract that not implement IERC721Receiver well", async function () {
+                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+                const receiver = await hre.ethers.deployContract("ReceiverBadReturn");
+                const signers = await hre.ethers.getSigners();
+                const [owner, user] = signers;
+
+                await myNft.setSaleOpen(true);
+
+                await myNft.mint(444, { value: PRICE });
+
+                await expect(myNft["safeTransferFrom(address,address,uint256)"](owner, receiver.getAddress(), 444)).to.be.revertedWithCustomError(myNft, "InvalidReceiver");
+            });
+
 
         });
 
