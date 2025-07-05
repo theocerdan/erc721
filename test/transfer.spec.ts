@@ -1,13 +1,13 @@
 import hre from "hardhat";
 import {expect} from "chai";
-import {BASE_URI, NAME, PRICE, SYMBOL, ZERO_ADDRESS} from "./myNFT.spec";
+import {BASE_URI, NAME, PRICE, SUPPLY, SYMBOL, ZERO_ADDRESS} from "./myNFT.spec";
 
 describe("Transfer", function () {
 
     describe("transferFrom()", function () {
 
         it("should transfer a token if user is owner", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -23,7 +23,7 @@ describe("Transfer", function () {
         });
 
         it("should not transfer a token if user is not owner", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user, user2] = signers;
 
@@ -37,7 +37,7 @@ describe("Transfer", function () {
         });
 
         it("should not transfer another people's token if user is not authorized", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -51,7 +51,7 @@ describe("Transfer", function () {
         });
 
         it("should transfer a token and remove specific approval on transferd token", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -69,7 +69,7 @@ describe("Transfer", function () {
         });
 
         it("should decrement and increment balance on transfer", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -87,7 +87,7 @@ describe("Transfer", function () {
         });
 
         it("should emit event when user transfer a token", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -108,7 +108,7 @@ describe("Transfer", function () {
 
     describe("safeTransferFrom()", function () {
         it("should revert transfer if 'to' is zero address", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner] = signers;
 
@@ -122,7 +122,7 @@ describe("Transfer", function () {
         });
 
         it("should revert transfer if token isn't valid", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -134,7 +134,7 @@ describe("Transfer", function () {
         });
 
         it("should exec onERC721Received if 'to' is a contract that implement IERC721Receiver", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const receiver = await hre.ethers.deployContract("Receiver");
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
@@ -152,7 +152,7 @@ describe("Transfer", function () {
         });
 
         it("should exec onERC721Received with data payload", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const receiver = await hre.ethers.deployContract("Receiver");
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
@@ -170,7 +170,7 @@ describe("Transfer", function () {
         });
 
         it("should exec onERC721Received if 'to' is a contract that not implement IERC721Receiver", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const receiver = await hre.ethers.deployContract("NotReceiver");
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
@@ -183,7 +183,7 @@ describe("Transfer", function () {
         });
 
         it("should exec onERC721Received if 'to' is a contract that not implement IERC721Receiver well", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const receiver = await hre.ethers.deployContract("ReceiverBadReturn");
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;

@@ -1,11 +1,11 @@
 import hre from "hardhat";
 import {expect} from "chai";
-import {BASE_URI, NAME, PRICE, SYMBOL, ZERO_ADDRESS} from "./myNFT.spec";
+import {BASE_URI, NAME, PRICE, SUPPLY, SYMBOL, ZERO_ADDRESS} from "./myNFT.spec";
 
 describe("Approval", function () {
 
     it("should approve an address", async function () {
-        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
         const signers = await hre.ethers.getSigners();
         const [owner, user] = signers;
 
@@ -19,7 +19,7 @@ describe("Approval", function () {
     });
 
     it("should emit event when user approve an address", async function () {
-        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
         const signers = await hre.ethers.getSigners();
         const [owner, user] = signers;
 
@@ -35,7 +35,7 @@ describe("Approval", function () {
     });
 
     it("should revoke approve to an approved address", async function () {
-        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
         const signers = await hre.ethers.getSigners();
         const [owner, user] = signers;
 
@@ -53,7 +53,7 @@ describe("Approval", function () {
     });
 
     it("should not approve an address if user is not the owner", async function () {
-        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
         const signers = await hre.ethers.getSigners();
         const [owner, user] = signers;
 
@@ -65,7 +65,7 @@ describe("Approval", function () {
     });
 
     it("should approveAll an address", async function () {
-        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
         const signers = await hre.ethers.getSigners();
         const [owner, user] = signers;
 
@@ -79,7 +79,7 @@ describe("Approval", function () {
     });
 
     it("should emit event when user approveAll an address", async function () {
-        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
         const signers = await hre.ethers.getSigners();
         const [owner, user] = signers;
 
@@ -95,7 +95,7 @@ describe("Approval", function () {
     });
 
     it("should revoke approveAll", async function () {
-        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+        const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
         const signers = await hre.ethers.getSigners();
         const [owner, user] = signers;
 

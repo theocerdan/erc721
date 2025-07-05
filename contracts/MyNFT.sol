@@ -30,6 +30,7 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     error WithdrawNotAllowed();
     error WithdrawNotAsked();
     error AlreadyMinted(uint256 tokenId);
+    error OutOfSupply(uint256 tokenId);
     error ERC721OutOfBoundsIndex(address, uint256);
 
     event SaleOpenChanged(bool open);
@@ -39,9 +40,10 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     event WithdrawCompleted(uint256 amount, address reciever);
 
     /* Information */
-    string private _name; //je peux prefixer metadata mais j'ai ajouté un _ car ma fonction s'appelle name
-    string private _symbol; // ici aussi
+    string private _name;
+    string private _symbol;
     string private _baseURI;
+    uint256 private _maxSupply;
 
     /* Crowd sale */
     uint256 public price;
@@ -71,11 +73,12 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         _;
     }
 
-    constructor (string memory defaultName, string memory defaultSymbol, string memory defaultBaseUri, uint256 defaultPrice) {
+    constructor (string memory defaultName, string memory defaultSymbol, string memory defaultBaseUri, uint256 defaultPrice, uint256 maxSupply) {
         _name = defaultName;
         _symbol = defaultSymbol;
         _baseURI = defaultBaseUri;
         _open = false;
+        _maxSupply = maxSupply;
 
         if (defaultPrice <= 0) revert InvalidPrice();
         price = defaultPrice;
@@ -89,6 +92,10 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     function symbol() public view returns (string memory) { //calldata ou memory sachant que la valeur retournée est une const
         return _symbol;
+    }
+
+    function maxSupply() public view returns (uint256) {
+        return _maxSupply;
     }
 
     function totalSupply() public view returns (uint256) {
@@ -178,6 +185,7 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         if (!_open) revert ClosedSale();
         if (msg.value < price) revert InvalidPrice();
         if (ownerOf(_nftId) != address(0)) revert AlreadyMinted(_nftId);
+        if (_nftId >= _maxSupply) revert OutOfSupply(_nftId);
 
         uint256 tokenId = _mint(msg.sender, _nftId);
 

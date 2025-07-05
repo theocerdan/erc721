@@ -1,13 +1,13 @@
 import hre from "hardhat";
 import {expect} from "chai";
-import {BASE_URI, NAME, PRICE, SYMBOL} from "./myNFT.spec";
+import {BASE_URI, NAME, PRICE, SUPPLY, SYMBOL} from "./myNFT.spec";
 
 describe("Enumerable", function () {
 
     describe("tokenByIndex()", function () {
 
         it("should retrieve tokenId by tokenIndex", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user_1, user_2] = signers;
 
@@ -16,18 +16,18 @@ describe("Enumerable", function () {
             await myNft.mint(100, {value: PRICE});
             await myNft.connect(user_1).mint(0, {value: PRICE});
             await myNft.connect(user_1).mint(44444, {value: PRICE});
-            await myNft.connect(user_2).mint(838838383, {value: PRICE});
+            await myNft.connect(user_2).mint(8388, {value: PRICE});
             await myNft.connect(user_2).mint(1, {value: PRICE});
 
             expect(await myNft.tokenByIndex(0)).to.be.equal(100n);
             expect(await myNft.tokenByIndex(1)).to.be.equal(0n);
             expect(await myNft.tokenByIndex(2)).to.be.equal(44444n);
-            expect(await myNft.tokenByIndex(3)).to.be.equal(838838383n);
+            expect(await myNft.tokenByIndex(3)).to.be.equal(8388n);
             expect(await myNft.tokenByIndex(4)).to.be.equal(1n);
         });
 
         it("should retrieve tokenId by tokenIndex if token is transfered", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user_1] = signers;
 
@@ -49,7 +49,7 @@ describe("Enumerable", function () {
         });
 
         it("should revert OutOfBoundsIndex error if token isn't minted", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
 
             await myNft.setSaleOpen(true);
@@ -67,7 +67,7 @@ describe("Enumerable", function () {
     describe("tokenOfOwnerByIndex()", function () {
 
         it("should retrieve tokenId by owner and owner's index with tokenOfOwnerByIndex", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner] = signers;
 
@@ -79,7 +79,7 @@ describe("Enumerable", function () {
         });
 
         it("should retrieve multiple token with tokenOfOwnerByIndex function", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner] = signers;
 
@@ -93,7 +93,7 @@ describe("Enumerable", function () {
         });
 
         it("should revert with OutOfBoundsIndex error if user doesn't have tokens", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -107,7 +107,7 @@ describe("Enumerable", function () {
         });
 
         it("should remove token from owner enumeration if token is transfered", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
