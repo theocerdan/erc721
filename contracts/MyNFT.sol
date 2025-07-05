@@ -7,7 +7,7 @@ import {IERC721Enumerable} from "../interfaces/IERC721Enumerable.sol";
 import {IERC721Metadata} from "../interfaces/IERC721Metadata.sol";
 import {IERC721Receiver} from "../interfaces/IERC721Receiver.sol";
 import {IERC721} from "../interfaces/IERC721.sol";
-import "@openzeppelin/contracts/utils/Strings.sol";
+import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
 
 /*
    PS: j'ai copié collé l'implem du Enumerable, j'ai compris le but et comment ça fonctionnais mais j'ai vraiment eu chaud sur l'implementation
