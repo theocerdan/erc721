@@ -16,7 +16,7 @@ import {Strings} from "@openzeppelin/contracts/utils/Strings.sol";
    - je pense que j'ai des getters qui servent a rien
 */
 
-contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
+contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
     error Unauthorized();
     error NotOwner();
