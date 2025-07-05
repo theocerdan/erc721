@@ -139,7 +139,7 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public {
         transferFrom(from, to, tokenId);
 
-        if (isContract(to)) {
+        if (_isContract(to)) {
             bytes4 result = IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data);
             if (result != IERC721Receiver.onERC721Received.selector) {
                 revert InvalidReceiver();
@@ -274,7 +274,7 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
         return _nftId;
     }
 
-    function isContract(address account) private view returns (bool) {
+    function _isContract(address account) private view returns (bool) {
         return account.code.length > 0;
     }
 
