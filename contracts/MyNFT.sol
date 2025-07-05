@@ -67,8 +67,6 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     mapping(uint256 => address) private approval;
     mapping(address => mapping(address => bool)) private approvalForAll;
 
-    bytes4 private constant ERC721_RECEIVED = 0x150b7a02;
-
     modifier onlySaleOwner() {
         require(msg.sender == saleOwner, Unauthorized());
         _;
@@ -143,7 +141,7 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
         if (isContract(to)) {
             bytes4 result = IERC721Receiver(to).onERC721Received(msg.sender, from, tokenId, data);
-            if (result != ERC721_RECEIVED) {
+            if (result != IERC721Receiver.onERC721Received.selector) {
                 revert InvalidReceiver();
             }
         }
