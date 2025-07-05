@@ -36,10 +36,12 @@ describe("MyNFT", function () {
             const erc721enumerableInterfaceId = '0x780e9d63';
             const erc721metadataInterfaceId = '0x5b5e139f';
             const erc721InterfaceId = '0x80ac58cd';
+            const erc165InterfaceId = '0x01ffc9a7';
 
             expect(await myNft.supportsInterface(erc721InterfaceId)).to.be.equal(true);
             expect(await myNft.supportsInterface(erc721metadataInterfaceId)).to.be.equal(true);
             expect(await myNft.supportsInterface(erc721enumerableInterfaceId)).to.be.equal(true);
+            expect(await myNft.supportsInterface(erc165InterfaceId)).to.be.equal(true);
         })
 
         it("should return true if interfaceId is not supported", async () => {

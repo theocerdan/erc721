@@ -248,7 +248,7 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     function supportsInterface(bytes4 interfaceId) external pure returns (bool) {
         return interfaceId == type(IERC721Metadata).interfaceId ||
         interfaceId == type(IERC721).interfaceId ||
-            interfaceId == type(IERC721Enumerable).interfaceId;
+            interfaceId == type(IERC721Enumerable).interfaceId || interfaceId == type(IERC165).interfaceId;
     }
 
     function _isValidToken(uint256 _tokenId) private view returns (bool) {
