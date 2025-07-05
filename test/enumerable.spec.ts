@@ -1,13 +1,13 @@
 import hre from "hardhat";
 import {expect} from "chai";
-import {BASE_URI, NAME, PRICE, SUPPLY, SYMBOL} from "./myNFT.spec";
+import {DEFAULT_URI, HIDDEN_URI_COMMIT, NAME, PRICE, SUPPLY, SYMBOL} from "./myNFT.spec";
 
 describe("Enumerable", function () {
 
     describe("tokenByIndex()", function () {
 
         it("should retrieve tokenId by tokenIndex", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, DEFAULT_URI, PRICE, SUPPLY, HIDDEN_URI_COMMIT]);
             const signers = await hre.ethers.getSigners();
             const [owner, user_1, user_2] = signers;
 
@@ -27,7 +27,7 @@ describe("Enumerable", function () {
         });
 
         it("should retrieve tokenId by tokenIndex if token is transfered", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, DEFAULT_URI, PRICE, SUPPLY, HIDDEN_URI_COMMIT]);
             const signers = await hre.ethers.getSigners();
             const [owner, user_1] = signers;
 
@@ -49,7 +49,7 @@ describe("Enumerable", function () {
         });
 
         it("should revert OutOfBoundsIndex error if token isn't minted", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, DEFAULT_URI, PRICE, SUPPLY, HIDDEN_URI_COMMIT]);
             const signers = await hre.ethers.getSigners();
 
             await myNft.setSaleOpen(true);
@@ -67,7 +67,7 @@ describe("Enumerable", function () {
     describe("tokenOfOwnerByIndex()", function () {
 
         it("should retrieve tokenId by owner and owner's index with tokenOfOwnerByIndex", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, DEFAULT_URI, PRICE, SUPPLY, HIDDEN_URI_COMMIT]);
             const signers = await hre.ethers.getSigners();
             const [owner] = signers;
 
@@ -79,7 +79,7 @@ describe("Enumerable", function () {
         });
 
         it("should retrieve multiple token with tokenOfOwnerByIndex function", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, DEFAULT_URI, PRICE, SUPPLY, HIDDEN_URI_COMMIT]);
             const signers = await hre.ethers.getSigners();
             const [owner] = signers;
 
@@ -93,7 +93,7 @@ describe("Enumerable", function () {
         });
 
         it("should revert with OutOfBoundsIndex error if user doesn't have tokens", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, DEFAULT_URI, PRICE, SUPPLY, HIDDEN_URI_COMMIT]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
@@ -107,7 +107,7 @@ describe("Enumerable", function () {
         });
 
         it("should remove token from owner enumeration if token is transfered", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE, SUPPLY]);
+            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, DEFAULT_URI, PRICE, SUPPLY, HIDDEN_URI_COMMIT]);
             const signers = await hre.ethers.getSigners();
             const [owner, user] = signers;
 
