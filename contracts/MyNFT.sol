@@ -41,7 +41,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     /* Information */
     string private _name; //je peux prefixer metadata mais j'ai ajouté un _ car ma fonction s'appelle name
     string private _symbol; // ici aussi
-    string private baseURI;
+    string private _baseURI;
 
     /* Crowd sale */
     uint256 public price;
@@ -77,7 +77,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     constructor (string memory defaultName, string memory defaultSymbol, string memory defaultBaseUri, uint256 defaultPrice) {
         _name = defaultName;
         _symbol = defaultSymbol;
-        baseURI = defaultBaseUri;
+        _baseURI = defaultBaseUri;
         open = false;
 
         if (defaultPrice <= 0) revert InvalidPrice();
@@ -101,7 +101,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     function tokenURI(uint256 _tokenId) public view override returns (string memory) {
         if (!_isValidToken(_tokenId)) revert InvalidToken();
         //marche pas avec abi.encode, c'est ce que slither me recommande mais ça plante
-        return string(abi.encodePacked(baseURI, Strings.toString(_tokenId), ".json"));
+        return string(abi.encodePacked(_baseURI, Strings.toString(_tokenId), ".json"));
     }
 
     function balanceOf(address _owner) public view returns (uint256) {
