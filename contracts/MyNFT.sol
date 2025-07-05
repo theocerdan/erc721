@@ -49,7 +49,6 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     uint256 private constant GRACE_PERIOD = 1 weeks;
     uint256 private endGracePeriod;
     bool private open; // TODO: Opti p-e "Booleans use 8 bits while you only need 1 bit"
-    uint256 private ethersRaised;
     address private saleOwner;
     address private pendingSaleOwner;
 
@@ -182,13 +181,7 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
 
         uint256 tokenId = _mint(msg.sender, _nftId);
 
-        ethersRaised += msg.value;
-
         emit Transfer(address(0), msg.sender, tokenId);
-    }
-
-    function getEthersRaised() public view returns (uint256) {
-        return ethersRaised;
     }
 
     function isSaleOpen() public view returns (bool) {
@@ -232,10 +225,8 @@ contract MyNFT is IERC165, IERC721, IERC721Metadata, IERC721Enumerable {
     function withdraw() external onlySaleOwner {
         if (block.timestamp < endGracePeriod) revert WithdrawNotAllowed();
         if (endGracePeriod == 0) revert WithdrawNotAsked();
-        if (ethersRaised == 0) revert NoEthersRaised();
 
-        uint256 amount = ethersRaised;
-        ethersRaised = 0;
+        uint256 amount = address(this).balance;
         endGracePeriod = 0;
 
         (bool success, ) = saleOwner.call{value: amount}("");

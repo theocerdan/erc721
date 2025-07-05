@@ -217,31 +217,6 @@ describe("MyNFT", function () {
             await expect(myNft.mint(0, { value: 0 })).to.be.revertedWithCustomError(myNft, "InvalidPrice");
         });
 
-        it("should add value to ethersRaised when user mint a token", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
-
-            await myNft.setSaleOpen(true);
-
-            await myNft.mint(0, { value: PRICE });
-            expect(await myNft.getEthersRaised()).to.be.equal(PRICE);
-
-            await myNft.mint(1, { value: PRICE });
-            expect(await myNft.getEthersRaised()).to.be.equal(PRICE * 2n);
-        });
-
-        it("should not add value to ethersRaised if mint is reverted", async function () {
-            const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
-
-            await myNft.setSaleOpen(true);
-
-            try {
-                //try to mint with 0 value
-                await myNft.mint(0);
-            } catch (e) {}
-
-            expect(await myNft.getEthersRaised()).to.be.equal(0n);
-        });
-
         it("should add value to smart contract when user mint a token", async function () {
             const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
 
@@ -508,17 +483,6 @@ describe("MyNFT", function () {
                     PRICE,
                     await owner.getAddress(),
                 );
-            });
-
-            it("should revert error during withdraw if ethers raised amount is 0", async function () {
-                const myNft = await hre.ethers.deployContract("MyNFT", [NAME, SYMBOL, BASE_URI, PRICE]);
-                await myNft.setSaleOpen(true);
-
-                await myNft.askWithdraw();
-
-                await fastForward(WEEK_IN_SECONDS);
-
-                await expect(myNft.withdraw()).to.be.revertedWithCustomError(myNft, "NoEthersRaised");
             });
 
             it("should withdraw if user is the sale owner and grace period is over", async function () {
