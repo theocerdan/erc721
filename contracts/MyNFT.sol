@@ -117,6 +117,9 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function transferFrom(address _from, address _to, uint256 _tokenId) public {
+        if (_to == address(0)) revert ZeroAddress();
+        if (!isValidToken(_tokenId)) revert InvalidToken();
+
         if (msg.sender != _from && !isOperator(_tokenId, _from, msg.sender)) {
             revert Unauthorized();
         } else if (owner[_tokenId] != _from) {
@@ -136,9 +139,6 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public {
-        if (to == address(0)) revert ZeroAddress();
-        if (!isValidToken(tokenId)) revert InvalidToken();
-
         transferFrom(from, to, tokenId);
 
         if (isContract(to)) {
