@@ -99,7 +99,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
     }
 
     function tokenURI(uint256 _tokenId) public view override returns (string memory) {
-        if (!isValidToken(_tokenId)) revert InvalidToken();
+        if (!_isValidToken(_tokenId)) revert InvalidToken();
         //marche pas avec abi.encode, c'est ce que slither me recommande mais ça plante
         return string(abi.encodePacked(baseURI, Strings.toString(_tokenId), ".json"));
     }
@@ -118,7 +118,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
 
     function transferFrom(address _from, address _to, uint256 _tokenId) public {
         if (_to == address(0)) revert ZeroAddress();
-        if (!isValidToken(_tokenId)) revert InvalidToken();
+        if (!_isValidToken(_tokenId)) revert InvalidToken();
 
         if (msg.sender != _from && !isOperator(_tokenId, _from, msg.sender)) {
             revert Unauthorized();
@@ -262,7 +262,7 @@ contract MyNFT is IERC721, IERC721Metadata, IERC721Enumerable {
             interfaceId == type(IERC721Enumerable).interfaceId;
     }
 
-    function isValidToken(uint256 _tokenId) private view returns (bool) {
+    function _isValidToken(uint256 _tokenId) private view returns (bool) {
         return owner[_tokenId] != address(0);
     }
 
