@@ -1,3 +1,23 @@
+# How to Deploy and Interact with MyNFT Contract
+
+### This is the actual variables used in the Hardhat tasks, you can change them as needed. 
+./tasks/tasks.ts
+
+
+```javascript
+const NAME = "MyNFT";
+const SYMBOL = "MNFT";
+const BEFORE_URI = "https://nothidden.com/";
+const SUPPLY = 999999;
+const PRICE = parseEther("0.1");
+
+const AFTER_URI = "https://hidden.com/";
+const AFTER_URI_COMMIT = ethers.solidityPackedKeccak256(
+    ["string"],
+    [AFTER_URI]
+);
+```
+
 ## Step 1: Deploy the NFT Contract
 
 ```bash
